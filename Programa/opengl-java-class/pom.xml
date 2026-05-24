@@ -1,0 +1,188 @@
+<!--
+  =============================================================================
+  POM = Project Object Model (archivo de configuración de Maven)
+  =============================================================================
+  Maven usa este archivo para saber:
+    - Cómo se llama el proyecto y qué versión de Java usar.
+    - Qué bibliotecas (dependencias) necesita el proyecto (LWJGL, JUnit, etc.).
+    - Cómo compilar el código y cómo ejecutar la clase principal.
+
+  Comandos útiles:
+    mvn compile        → Compila el código Java.
+    mvn exec:exec      → Ejecuta la clase indicada en <mainClass> (tras compilar).
+    mvn clean compile exec:exec  → Limpia, compila y ejecuta.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- Identificación del proyecto (como "nombre" único en el mundo Maven) -->
+  <groupId>com.graphics</groupId>
+  <artifactId>opengl-java-class</artifactId>
+  <packaging>jar</packaging>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>opengl-java-class</name>
+  <url>http://maven.apache.org</url>
+
+  <!--
+    Propiedades reutilizables en el POM.
+    Aquí definimos la versión de Java, la de LWJGL y la clase con main() por defecto.
+  -->
+  <properties>
+    <!-- Versión de Java para compilar: el código fuente debe ser compatible con Java 17 -->
+    <maven.compiler.source>17</maven.compiler.source>
+    <!-- Versión del bytecode generado ( .class ); normalmente igual que source -->
+    <maven.compiler.target>17</maven.compiler.target>
+    <!-- Versión de LWJGL (Lightweight Java Game Library); usamos 3.3.3 en todas las dependencias -->
+    <lwjgl.version>3.3.3</lwjgl.version>
+    <!--
+      Clase que contiene public static void main(String[] args).
+      Al ejecutar "mvn exec:exec" se lanza esta clase.
+      Puedes cambiar la clase desde la terminal sin tocar el POM:
+        mvn exec:exec -DmainClass=com.graphics.OtraClase
+    -->
+    <mainClass>com.graphics.App</mainClass>
+  </properties>
+
+  <!--
+    ==========================================================================
+    DEPENDENCIAS = bibliotecas que el proyecto necesita para compilar y ejecutar
+    ==========================================================================
+    Maven las descarga automáticamente desde repositorios (por defecto Maven Central).
+    groupId + artifactId + version identifican cada dependencia de forma única.
+  -->
+  <dependencies>
+    <!-- JUnit: biblioteca para escribir pruebas unitarias (tests). scope=test = solo para tests -->
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!--
+      LWJGL = Lightweight Java Game Library.
+      Son los "bindings" de Java para OpenGL y GLFW: permiten llamar a OpenGL y GLFW desde Java.
+      Tres módulos principales (sin "natives"):
+        - lwjgl        → Núcleo y carga de bibliotecas nativas.
+        - lwjgl-glfw   → Crear ventanas, teclado, ratón (GLFW desde Java).
+        - lwjgl-opengl → Llamadas a OpenGL (dibujar, shaders, buffers, etc.).
+    -->
+    <dependency>
+      <groupId>org.lwjgl</groupId>
+      <artifactId>lwjgl</artifactId>
+      <version>${lwjgl.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.lwjgl</groupId>
+      <artifactId>lwjgl-glfw</artifactId>
+      <version>${lwjgl.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.lwjgl</groupId>
+      <artifactId>lwjgl-opengl</artifactId>
+      <version>${lwjgl.version}</version>
+    </dependency>
+    <!-- 
+    OpenGL y GLFW están escritos en C y dependen del sistema operativo y la
+      arquitectura. Las dependencias anteriores solo traen el código Java; estas
+      traen el .dylib (en Mac) que realmente habla con la GPU y el sistema.
+      "classifier" indica qué variante descargar: natives-macos = Mac 64 bits Intel.
+      Si no incluyes la variante correcta para tu máquina, verás errores como
+      "Failed to locate library: liblwjgl.dylib" o "Platform/architecture mismatch". -->
+    <dependency>
+      <groupId>org.lwjgl</groupId>
+      <artifactId>lwjgl</artifactId>
+      <version>${lwjgl.version}</version>
+      <classifier>natives-windows</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.lwjgl</groupId>
+      <artifactId>lwjgl-glfw</artifactId>
+      <version>${lwjgl.version}</version>
+      <classifier>natives-windows</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.lwjgl</groupId>
+      <artifactId>lwjgl-opengl</artifactId>
+      <version>${lwjgl.version}</version>
+      <classifier>natives-windows</classifier>
+    </dependency>
+    <!-- 
+    En Mac con chip Apple (arm64) hace falta esta variante. Si solo tienes
+      natives-macos (Intel), en Apple Silicon fallará. Incluir ambas hace que
+      el mismo proyecto funcione en Intel y en Apple Silicon (Maven pone en el
+      classpath todas; en runtime se usa la que coincide con tu sistema). -->
+          <!--
+    <dependency>
+      <groupId>org.lwjgl</groupId>
+      <artifactId>lwjgl</artifactId>
+      <version>${lwjgl.version}</version>
+      <classifier>natives-macos-arm64</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.lwjgl</groupId>
+      <artifactId>lwjgl-glfw</artifactId>
+      <version>${lwjgl.version}</version>
+      <classifier>natives-macos-arm64</classifier>
+    </dependency>
+    <dependency>
+      <groupId>org.lwjgl</groupId>
+      <artifactId>lwjgl-opengl</artifactId>
+      <version>${lwjgl.version}</version>
+      <classifier>natives-macos-arm64</classifier>
+    </dependency>-->
+  </dependencies>
+
+  <!--
+    ==========================================================================
+    BUILD = cómo compilar y qué plugins usar (compilador, ejecutar clase, etc.)
+    ==========================================================================
+  -->
+  <build>
+    <plugins>
+      <!--
+        maven-compiler-plugin: compila el código Java.
+        Aquí forzamos Java 17 (source, target y release) para que el compilador
+        use esa versión aunque en el sistema haya otra. "release" además fija
+        las APIs que se pueden usar (evita usar APIs de versiones superiores).
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <source>17</source>
+          <target>17</target>
+          <release>17</release>
+        </configuration>
+      </plugin>
+      <!--
+        exec-maven-plugin: permite ejecutar la aplicación con "mvn exec:exec".
+        Usamos el goal "exec" (y no "java") porque necesitamos pasar un argumento
+        a la JVM: -XstartOnFirstThread, obligatorio en macOS para que GLFW funcione
+        correctamente (el main debe ser el primer hilo).
+        executable=java + arguments = lanzar un proceso "java" con ese classpath
+        y esa clase (mainClass). <classpath/> es un placeholder que Maven sustituye
+        por el classpath del proyecto (todas las dependencias + clases compiladas).
+      -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.1.0</version>
+        <configuration>
+          <executable>java</executable>
+          <arguments>
+            <!-- En Windows no se necesita -XstartOnFirstThread (es solo de macOS) -->
+            <argument>-classpath</argument>
+            <classpath/>
+            <!-- La clase con main(); viene de la propiedad ${mainClass} (por defecto com.graphics.App) -->
+            <argument>${mainClass}</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>
